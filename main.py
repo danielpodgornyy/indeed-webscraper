@@ -1,4 +1,4 @@
-import openpyxl
+from openpyxl import Workbook
 
 def checkWorkbookExists():
     from os import path
