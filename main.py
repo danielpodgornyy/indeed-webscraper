@@ -45,7 +45,7 @@ def ImportJobInfo(currPg, inputLink, WB, currRowPos, newWidthDimensions):
     #Used to access each column
     itemLetters = ["A", "B", "C", "D", "E"]
     for counter, jobOpening in enumerate(jobOpenings, start = currRowPos):
-        #Aquires each attribute
+        #Acquires each attribute
         companyName = jobOpening.find("span", class_ = "css-1x7z1ps").text
         jobTitle = jobOpening.find(class_ = "jobTitle").text
         location = jobOpening.find("div", class_ = "css-t4u72d").text
@@ -69,10 +69,13 @@ def ImportJobInfo(currPg, inputLink, WB, currRowPos, newWidthDimensions):
     for letter in itemLetters:
         FirstSheet.column_dimensions[letter].width = widthDimensions[letter]
 
+
     #Prepares the current row position, the next page and the next page link for the following iteration
     currRowPos = currRowPos + len(list(jobOpenings))
     nextPage = currPg + 1
     nextLink = "https://www.indeed.com" + soup.find(attrs = {"aria-label" : nextPage})["href"]
+
+    print(f"Page {currPg} scanned")
 
     return nextLink, currRowPos, widthDimensions
 
@@ -86,6 +89,8 @@ if (__name__ == "__main__"):
 
     for pgNum in range(1,4):
         nextLink, rowPos, inputWidthDims = ImportJobInfo(pgNum, nextLink, wb, rowPos, inputWidthDims)
+
+    print("Job_Listings.xlsx updated!")
 
     wb.save(filename = "JobListings.xlsx")
 
