@@ -1,0 +1,5 @@
+1. Search for a particular job in indeed or just keep the default main page (Either way, paste/replace its link below)
+https://www.indeed.com/jobs?q=software+engineer+intern&l=Dallas%2C+TX&from=searchOnHP&vjk=12346f1d707075a1
+2. Enter any words you want filtered in the job title name followed by a comma (If you don't want any filter, keep as None) (write in single line)
+EX: software,data,azure
+None
