@@ -19,7 +19,7 @@ Scrapes through an indeed webpage and imports vital information about each job i
     ```
     pip install openpyxl
     ```
-- Place your wanted information into an configuration file named config.xlsx (Not yet applicable)
+- Place your wanted information into an configuration file named config.xlsx
 - In bash terminal run
 ```
 python3 main.py
