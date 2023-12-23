@@ -2,6 +2,7 @@
 Scrapes through an indeed webpage and imports vital information about each job into an organized excel sheet
 
 ## How to Use
+- Download the files into a directory
 - Install all necessary external modules
     - Beautiful Soup
     ```
@@ -20,7 +21,7 @@ Scrapes through an indeed webpage and imports vital information about each job i
     pip install openpyxl
     ```
 - Place your wanted information into an configuration file named config.xlsx
-- In bash terminal run
+- In bash terminal run in said directory
 ```
 python3 main.py
 ```
