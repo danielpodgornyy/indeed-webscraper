@@ -8,6 +8,7 @@ def checkWorkbookExists():
     if path.exists("./JobListings.xlsx"):
         currWB = load_workbook(filename = "JobListings.xlsx")
     else:
+        #Creates new workbook template
         currWB = Workbook()
         currWB["Sheet"].title = "Indeed_Listings"
         currSheet = currWB["Indeed_Listings"]
@@ -21,18 +22,18 @@ def checkWorkbookExists():
     return currWB
 
 
-def ImportJobInfo(currPg, inputLink, WB, currRowPos, newWidthDimensions):
+def ImportJobInfo(currPg, inputLink, WB, currRowPos, newWidthDimensions, ExistJobs):
     from bs4 import BeautifulSoup
     from selenium import webdriver
 
-    #The current width dimensions are updated from the last width dimensions
-    widthDimensions = newWidthDimensions
+    widthDimensions = newWidthDimensions #The current width dimensions are updated from the last width dimensions
+    counter = currRowPos #CurrentRowPos is used as the counter for the jobOpening loop
 
     #Current sheet
     FirstSheet = WB["Indeed_Listings"]
 
 
-    #Opens browser, pulls its html, and constructs a beatiful soup object in lxml form 
+    #Opens browser, pulls its html, and constructs a beautiful soup object in lxml form 
     browser = webdriver.Chrome()
     browser.get(inputLink)
     soup = BeautifulSoup(browser.page_source,"lxml")
@@ -44,7 +45,9 @@ def ImportJobInfo(currPg, inputLink, WB, currRowPos, newWidthDimensions):
     
     #Used to access each column
     itemLetters = ["A", "B", "C", "D", "E"]
-    for counter, jobOpening in enumerate(jobOpenings, start = currRowPos):
+
+    noNewJobs = True
+    for jobOpening in jobOpenings: 
         #Acquires each attribute
         companyName = jobOpening.find("span", class_ = "css-1x7z1ps").text
         jobTitle = jobOpening.find(class_ = "jobTitle").text
@@ -55,23 +58,29 @@ def ImportJobInfo(currPg, inputLink, WB, currRowPos, newWidthDimensions):
         #Used to set each attribute in its correct column (position matters)
         itemAttr = [companyName, jobTitle, location, extraInfo, link]
 
-        for letter,attribute in zip(itemLetters, itemAttr):
-            if (attribute is not None):
-                #Some of the extra info attributes are None (its text must be acquired here)
-                if (letter == "D"):
-                    FirstSheet[letter + str(counter)] = attribute.text
-                    continue
+        if (jobTitle in ExistJobs):
+            pass
+        else:
+            for letter,attribute in zip(itemLetters, itemAttr):
+                if (attribute is not None):
+                    #Some of the extra info attributes are None (its text must be acquired here)
+                    if (letter == "D"):
+                        FirstSheet[letter + str(counter)] = attribute.text
+                        continue
 
-                FirstSheet[letter + str(counter)] = attribute
-                widthDimensions[letter] = max(widthDimensions[letter], len(attribute)) #gets max width
+                    FirstSheet[letter + str(counter)] = attribute
+                    widthDimensions[letter] = max(widthDimensions[letter], len(attribute)) #gets max width
+                    noNewJobs = False
+            counter = counter + 1
     
-    #Updates width using widthDimensions dict
-    for letter in itemLetters:
-        FirstSheet.column_dimensions[letter].width = widthDimensions[letter]
+    if (noNewJobs == False):
+        #Updates width using widthDimensions dict
+        for letter in itemLetters:
+            FirstSheet.column_dimensions[letter].width = widthDimensions[letter]
 
 
     #Prepares the current row position, the next page and the next page link for the following iteration
-    currRowPos = currRowPos + len(list(jobOpenings))
+    currRowPos = counter
     nextPage = currPg + 1
     nextLink = "https://www.indeed.com" + soup.find(attrs = {"aria-label" : nextPage})["href"]
 
@@ -79,18 +88,38 @@ def ImportJobInfo(currPg, inputLink, WB, currRowPos, newWidthDimensions):
 
     return nextLink, currRowPos, widthDimensions
 
+
+def createListExistingJobs(WB):
+    #Current sheet
+    FirstSheet = WB["Indeed_Listings"]
+
+    #Prepare a list of all job titles from the excel sheet
+    jobList = []
+    counter = 2 #Two is the starting pos for actual job entrees
+    tempStrInput = "Not Empty"
+    while(tempStrInput is not None):
+        tempStrInput = FirstSheet["B" + str(counter)].value
+        jobList.append(tempStrInput)
+        counter = counter + 1
+
+    #Remove None
+    jobList.pop()
+
+    return jobList, counter-1 
+
 if (__name__ == "__main__"):
     wb = checkWorkbookExists()
 
     #Default/Initial values
     nextLink = "https://www.indeed.com/jobs?q=software+engineer+intern&l=Dallas%2C+TX&radius=50&vjk=d3bb61d716c96bac"
-    rowPos = 2 #First row is the info row
     inputWidthDims = {"A" : 0, "B" : 0, "C" : 0, "D" : 0, "E" : 0}
 
-    for pgNum in range(1,4):
-        nextLink, rowPos, inputWidthDims = ImportJobInfo(pgNum, nextLink, wb, rowPos, inputWidthDims)
+    ExistingJobs, rowPos = createListExistingJobs(wb)
 
-    print("Job_Listings.xlsx updated!")
+    for pgNum in range(1,4):
+        nextLink, rowPos, inputWidthDims = ImportJobInfo(pgNum, nextLink, wb, rowPos, inputWidthDims, ExistingJobs)
+
+    print("Job_Listings.xlsx updated")
 
     wb.save(filename = "JobListings.xlsx")
 
